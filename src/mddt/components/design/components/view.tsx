@@ -1,27 +1,40 @@
 import React from "react";
-import { CSSColor, CSSSizeNumeric$1, CSSSizeNumeric$2, CSSSizeNumeric$4 } from "./css-types";
+import { CSSColor, CSSSize, CSSSizeNumeric$1, CSSSizeNumeric$2, CSSSizeNumeric$4 } from "../css-types";
 
-export interface Binding {}
+export class View extends React.Component {
+	private constructor(binding: ViewBinding) {
+		super(binding)
+	}
 
-export interface MaterialDesignReact extends React.ReactElement<Binding> { }
+	public setBackgroundColor(backgroundColor: CSSColor): void {
+		(this.props as ViewBinding).backgroundColor = backgroundColor;
+	}
 
-export class View implements MaterialDesignReact {
-	readonly props: ViewBinding;
+	public static getTypeAttribute(any: any): "single" | "double" | "quadruple" | "double-double" | "quadruple-quadruple" | "nothing" {
 
-	type: string | React.JSXElementConstructor<any> = "view";
-	key: string | null = null;
+		if (typeof any === "string") return "single"
 
-	constructor(binding: ViewBinding) {
-		this.props = binding;
+		if (Array.isArray(any)) {
+			if (any.length === 2) {
+				if (Array.isArray(any[0]) && Array.isArray(any[1])) return "double-double";
+
+				return "double";
+			} else if (any.length === 4) {
+				if (Array.isArray(any[0]) && Array.isArray(any[1]) && Array.isArray(any[2]) && Array.isArray(any[3])) return "quadruple-quadruple";
+				return "quadruple";
+			}
+		}
+
+		return "nothing";
 	}
 
 	protected getColorAttribute(color: any): string | undefined {
 		function getColorType(color: any): "hexadecimal" | "hsl" | "rgb" | "named" | "unknown" | "advanced" | "hwb" {
 			if (typeof color === "string") {
-				// Named color o función avanzada
 				if (/^(black|silver|gray|white|maroon|red|purple|fuchsia|green|lime|olive|yellow|navy|blue|teal|aqua|orange|aliceblue|rebeccapurple|transparent|currentColor|inherit|initial|unset)$/i.test(color)) {
 					return "named";
 				}
+
 				if (/^color\(/i.test(color) || /\.(lab|lch|oklab|oklch|display-p3|srgb)$/.test(color)) {
 					return "advanced";
 				}
@@ -55,15 +68,14 @@ export class View implements MaterialDesignReact {
 				if (
 					color.length >= 3 &&
 					((
-						/^\d{1,3}%$/.test(color[0]) &&
-						/^\d{1,3}%$/.test(color[1]) &&
-						/^\d{1,3}%$/.test(color[2])
-					) || (
 						/^\d{1,3}$/.test(color[0]) &&
 						/^\d{1,3}$/.test(color[1]) &&
 						/^\d{1,3}$/.test(color[2])
-					)) &&
-					/^((0.\d+|1.0)|\d+(\.\d+)?%|\d{1,3})$/.test(color[3])
+					) || (
+						/^\d{1,3}%$/.test(color[0]) &&
+						/^\d{1,3}%$/.test(color[1]) &&
+						/^\d{1,3}%$/.test(color[2])
+					))
 				) {
 					return "rgb";
 				}
@@ -142,41 +154,78 @@ export class View implements MaterialDesignReact {
 		}
 	}
 
-	protected getPaddingAttribute() { }
+	protected getPaddingAttribute(padding: CSSSizeNumeric$1 | CSSSizeNumeric$2 | CSSSizeNumeric$4 | undefined): string | undefined {
+		switch (View.getTypeAttribute(padding)) {
+			case 'double':
+			case 'quadruple': {
+				return (padding as Array<string>).join(" ");
+			}
+
+			case "nothing":
+			case "quadruple-quadruple":
+			case "double-double":
+			default: return undefined;
+		}
+	}
 
 	public setPadding(padding: CSSSizeNumeric$1 | CSSSizeNumeric$2 | CSSSizeNumeric$4): void {
-
+		(this.props as ViewBinding).padding = padding;
 	}
 
 	public getAttribute(): React.CSSProperties {
-		const b = this.props as ViewBinding;
-		
-		
+		const b = (this.props as ViewBinding);
+
+		console.log(b.backgroundColor);
+		console.log(this.getColorAttribute(b.backgroundColor));
 
 		let mapped: React.CSSProperties = {
 			// --- Size ---
 			width: b.height,
 			height: b.width,
 
+			// --- Padding ---
+			padding: this.getPaddingAttribute(b.padding),
+
 			backgroundColor: this.getColorAttribute(b.backgroundColor),
-			color: this.getColorAttribute(b.foregoundColor)
+			color: this.getColorAttribute(b.foregoundColor),
 		};
 
 		return mapped;
 	}
 
-	static React(binding: ViewBinding): View {
-		return new View(binding);
+	public getPropertier(): React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
+		const b = (this.props as ViewBinding);
+
+		return {
+			id: b.name,
+			style: this.getAttribute()
+		}
+	}
+
+	public render(): React.ReactElement {
+		return <div {...this.getPropertier()} />;
+	}
+
+	public static create(width: CSSSizeNumeric$1, height: CSSSizeNumeric$1): View {
+		return new View({
+			width,
+			height,
+		});
+	}
+
+	public static React(binding: ViewBinding): React.ReactElement {
+		return new View(binding).render();
 	};
 }
 
-interface ViewBinding extends Binding {
+interface ViewBinding {
 	// --- Size ---
 	width: CSSSizeNumeric$1;
 	height: CSSSizeNumeric$1;
 
 	// --- Padding ---
 	padding?: CSSSizeNumeric$1 | CSSSizeNumeric$2 | CSSSizeNumeric$4;
+	onPaddingChanged?: (olded: CSSSizeNumeric$1 | CSSSizeNumeric$2 | CSSSizeNumeric$4, newed: CSSSizeNumeric$1 | CSSSizeNumeric$2 | CSSSizeNumeric$4, view: View) => void;
 
 	// --- Id ---
 	name?: string;

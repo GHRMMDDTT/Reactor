@@ -1,17 +1,12 @@
 import React from 'react';
 import './App.css';
-import { MaterialDesignReact, View, Binding } from './mddt/components/design/components-widgets';
+import { View } from './mddt/components/design/components/view';
+import { CSSSizeMath$1, CSSSizeNumeric$1, CSSSizeNumeric$2, CSSSizeNumeric$4 } from './mddt/components/design/css-types';
 
 function App() {
-	let a: View | React.ReactElement<Binding> = <View.React width='100px' height='200px' padding='100px' onPaddingChanget={
-		(old: CSSSizeNumeric$1 | CSSSizeNumeric$2 | CSSSizeNumeric$4, newed: CSSSizeNumeric$1 | CSSSizeNumeric$2 | CSSSizeNumeric$4) => {
-			if (View.getAttributeCastToInt(newed) >= 100) {
-				(a as View).setPadding(['50px', '50px']);
-			}
-			(a as View).setPadding(newed);
-		}
-	}/>;
-	return a;
+	return <View.React width='100px' height='200px' backgroundColor={['100%', '100%', '0%']} onPaddingChanged={(olded: CSSSizeNumeric$1 | CSSSizeNumeric$2 | CSSSizeNumeric$4, newed: CSSSizeNumeric$1 | CSSSizeNumeric$2 | CSSSizeNumeric$4, view: View) => {
+		view.setBackgroundColor
+	}} />;
 }
 
 export default App;
