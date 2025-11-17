@@ -1,5 +1,5 @@
 import './App.css';
-import { View } from './mddt/components/design/widgets/view';
+import { View, View$OnPaddingChangedListener } from './mddt/components/design/widgets/view';
 
 /*<CSS>
 	<CSSColor>
@@ -30,6 +30,21 @@ import { View } from './mddt/components/design/widgets/view';
 
 export default function App() {
 	return <View
-		width='200px'
-		height='100px' />;
+		width='100px'
+		height='100px'
+		padding='50px'
+		backgroundColor={'red'}
+		onPressed={(self) => {
+			self.setWidth('200px')
+		}}
+		onReleased={(self) => {
+			self.setWidth(undefined)
+		}}
+		onPaddingChanged={
+			{
+				onPaddingChanged: (olded: [string, string, string, string], newes: [string, string, string, string]) => {
+					console.log("📦 Padding actualizado:", { old: olded, new: newes });
+				}
+			}
+		} />;
 }

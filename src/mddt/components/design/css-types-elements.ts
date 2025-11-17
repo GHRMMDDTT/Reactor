@@ -1,5 +1,3 @@
-import React, { ReactElement } from "react";
-
 // --- General Type CSS ---
 export type CSSElements = CSSColorElement | CSSSizeElement;
 

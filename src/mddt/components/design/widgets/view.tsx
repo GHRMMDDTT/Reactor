@@ -1,27 +1,14 @@
 import React, {  } from "react";
 import { CSSColorElement, CSSSizeNumeric$1$Element as CSSSizeNumeric$1$Element, CSSSizeNumeric$2$Element as CSSSizeNumeric$2$Element, CSSSizeNumeric$4$Element as CSSSizeNumeric$4$Element } from "../css-types-elements";
 
-export class View extends React.Component<ViewBinding, {
-	width: CSSSizeNumeric$1$Element;
-	height: CSSSizeNumeric$1$Element;
-
-	backgroundColor?: CSSColorElement;
-	padding?: CSSSizeNumeric$1$Element | CSSSizeNumeric$2$Element | CSSSizeNumeric$4$Element | undefined;
-	margin?: CSSSizeNumeric$1$Element | CSSSizeNumeric$2$Element | CSSSizeNumeric$4$Element | undefined;
-}> {
+export class View extends React.Component<ViewBinding, ViewBinding> {
 	public constructor(binding: ViewBinding) {
 		super(binding)
-		this.state = {
-			width: this.props.width,
-			height: this.props.height,
-			backgroundColor: this.props.backgroundColor,
-			padding: this.props.padding,
-			margin: this.props.margin
-		};
+		this.state = binding;
 	}
 
-	public setWidth(width: CSSSizeNumeric$1$Element): void {
-		this.setState({ width: width });
+	public setWidth(width: CSSSizeNumeric$1$Element | undefined): void {
+		this.setState({ width: width ?? this.props.width });
 	}
 
 	public getWidth(): string {
@@ -29,7 +16,7 @@ export class View extends React.Component<ViewBinding, {
 	}
 
 	public setHeight(height: CSSSizeNumeric$1$Element): void {
-		this.setState({ height: height });
+		this.setState({ height: height ?? this.props.height });
 	}
 
 	public getHeight(): string {
@@ -37,11 +24,78 @@ export class View extends React.Component<ViewBinding, {
 	}
 
 	public setBackgroundColor(backgroundColor: CSSColorElement | undefined): void {
-		this.setState({ backgroundColor: backgroundColor });
+		this.setState({ backgroundColor: backgroundColor ?? this.props.backgroundColor });
 	}
 
 	public getBackgroundColor(): string | undefined {
 		return this.getColorAttribute(this.state.backgroundColor);
+	}
+
+	public setPadding(padding: CSSSizeNumeric$1$Element | CSSSizeNumeric$2$Element | CSSSizeNumeric$4$Element | undefined): void {
+		const oldNormalized = this.normalizePadding(this.state.padding);
+		const newNormalized = this.normalizePadding(padding ?? this.props.padding);
+
+		const hasChanged = oldNormalized.some((val, i) => val !== newNormalized[i]);
+
+		this.setState({ padding }, () => {
+			if (hasChanged && this.state.onPaddingChanged) {
+				this.state.onPaddingChanged.onPaddingChanged(oldNormalized, newNormalized);
+			}
+		});
+	}
+
+	public getPadding(): string | undefined {
+		return this.getPaddingOrMarginAttribute(this.state.padding);
+	}
+
+	public setMargin(margin: CSSSizeNumeric$1$Element | CSSSizeNumeric$2$Element | CSSSizeNumeric$4$Element | undefined): void {
+		this.setState({ margin: margin });
+	}
+
+	public getMargin(): string | undefined {
+		return this.getPaddingOrMarginAttribute(this.state.margin);
+	}
+
+	public getAttribute(): React.CSSProperties {
+		const b = (this.props as ViewBinding);
+
+		let mapped: React.CSSProperties = {
+			// --- Size ---
+			width: this.state.width,
+			height: this.state.height,
+
+			// --- Padding ---
+			padding: this.getPaddingOrMarginAttribute(this.state.padding),
+			margin: this.getPaddingOrMarginAttribute(this.state.margin),
+
+			backgroundColor: this.getColorAttribute(this.state.backgroundColor),
+		};
+
+		return mapped;
+	}
+
+	public getPropertier(): React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
+		const b = (this.props as ViewBinding);
+
+		return {
+			id: b.name,
+			style: this.getAttribute(),
+
+			onMouseDown: () => {
+				if (b !== undefined && b.onPressed !== undefined) {
+					b.onPressed(this);
+				}
+			},
+			onMouseUp: () => {
+				if (b !== undefined && b.onReleased !== undefined) {
+					b.onReleased(this);
+				}
+			}
+		}
+	}
+
+	public render(): React.ReactElement {
+		return <div {...this.getPropertier()} />;
 	}
 
 	protected getColorAttribute(color: any): string | undefined {
@@ -170,22 +224,6 @@ export class View extends React.Component<ViewBinding, {
 		}
 	}
 
-	public setPadding(padding: CSSSizeNumeric$1$Element | CSSSizeNumeric$2$Element | CSSSizeNumeric$4$Element | undefined): void {
-		this.setState({ padding: padding });
-	}
-
-	public getPadding(): string | undefined {
-		return this.getPaddingOrMarginAttribute(this.state.padding);
-	}
-
-	public setMargin(margin: CSSSizeNumeric$1$Element | CSSSizeNumeric$2$Element | CSSSizeNumeric$4$Element | undefined): void {
-		this.setState({ margin: margin });
-	}
-
-	public getMargin(): string | undefined {
-		return this.getPaddingOrMarginAttribute(this.state.margin);
-	}
-
 	protected getPaddingOrMarginAttribute(padding: CSSSizeNumeric$1$Element | CSSSizeNumeric$2$Element | CSSSizeNumeric$4$Element | undefined): string | undefined {
 		switch (View.getTypeAttribute(padding)) {
 			case 'double':
@@ -205,50 +243,6 @@ export class View extends React.Component<ViewBinding, {
 
 			case 'unknwon':
 		}
-	}
-
-	public getAttribute(): React.CSSProperties {
-		const b = (this.props as ViewBinding);
-
-		console.log(this.state.width)
-
-		let mapped: React.CSSProperties = {
-			// --- Size ---
-			width: this.state.width,
-			height: this.state.height,
-
-			// --- Padding ---
-			padding: this.getPaddingOrMarginAttribute(this.state.padding),
-			margin: this.getPaddingOrMarginAttribute(this.state.margin),
-
-			backgroundColor: this.getColorAttribute(this.state.backgroundColor),
-		};
-
-		return mapped;
-	}
-
-	public getPropertier(): React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-		const b = (this.props as ViewBinding);
-
-		return {
-			id: b.name,
-			style: this.getAttribute(),
-
-			onMouseDown: () => {
-				if (b !== undefined && b.onPressed !== undefined) {
-					b.onPressed(this);
-				}
-			},
-			onMouseUp: () => {
-				if (b !== undefined && b.onReleased !== undefined) {
-					b.onReleased(this);
-				}
-			}
-		}
-	}
-
-	public render(): React.ReactElement {
-		return <div {...this.getPropertier()} />;
 	}
 
 	public static getTypeAttribute(any: any): "single" | "double" | "quadruple" | "double-double" | "quadruple-quadruple" | "quadruple-double" | "nothing" | "unknwon" {
@@ -271,15 +265,46 @@ export class View extends React.Component<ViewBinding, {
 
 		return "nothing";
 	}
+
+	private normalizePadding(value: CSSSizeNumeric$1$Element | CSSSizeNumeric$2$Element | CSSSizeNumeric$4$Element | undefined): [string, string, string, string] {
+		if (value === undefined || value === null) {
+			return ["0px", "0px", "0px", "0px"];
+		}
+
+		if (typeof value === "string") {
+			return [value, value, value, value];
+		}
+
+		if (Array.isArray(value)) {
+			switch (value.length) {
+				case 2:
+					return [value[0], value[1], value[0], value[1]];
+				case 4:
+					return [value[0], value[1], value[2], value[3]];
+				default:
+					return ["0px", "0px", "0px", "0px"];
+			}
+		}
+
+		return ["0px", "0px", "0px", "0px"];
+	}
+}
+
+export interface View$OnPaddingChangedListener {
+	onPaddingChanged(olded: [string, string, string, string], newes: [string, string, string, string]): void;
 }
 
 export interface ViewBinding {
 	// --- Size ---
 	width: CSSSizeNumeric$1$Element;
+	minimumWidth?: CSSSizeNumeric$1$Element;
+	
 	height: CSSSizeNumeric$1$Element;
 
 	// --- Layout ---
 	padding?: CSSSizeNumeric$1$Element | CSSSizeNumeric$2$Element | CSSSizeNumeric$4$Element | undefined;
+	onPaddingChanged?: View$OnPaddingChangedListener;
+
 	margin?: CSSSizeNumeric$1$Element | CSSSizeNumeric$2$Element | CSSSizeNumeric$4$Element | undefined;
 
 	// --- Id ---
