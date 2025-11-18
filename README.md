@@ -4,6 +4,6 @@
 
 
 <p align="center">
-    <img src="./logo.png" alt="Mi Logo" width="200">
-    <img src="./Reactor.png" alt="Mi Logo" width="200">
+    <img src="./logo.png" alt="Mi Logo" width="300">
+    <img src="./Reactor.png" alt="Mi Logo" width="300">
 </p>
